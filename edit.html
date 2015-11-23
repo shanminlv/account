@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>一键办理</title>
+<link href="css/base.css" type="text/css" rel="stylesheet">
+<link href="css/addlv.css" type="text/css" rel="stylesheet">
+</head>
+<body class="body" style="min-width:320px;">
+  
+    <div class="preview" id="preview" >
+        <!--
+        <div class="preview_img" >
+            <img src="images/preview3.png" id="preview_img"/>
+        </div>
+        <div class="preview_num cost" id="preview_num" ><span>金额</span></div>
+        <div class="preview_msg" id="preview_msg">事项</div>
+        <div class="preview_delete" id="preview_delete">
+            <a href="#"><img src="images/delete3.png"/></a>
+        </div>   
+        !-->
+    </div>
+   
+    <div class="project">
+        
+        <span>事项</span><input type="text" id="msg"/>
+    </div>
+    <div class="project">
+        <div class="o"></div>
+        <span>金额</span><input type="text" id="money"/>
+    </div>
+    <button class="but" id="save">保存</button>
+    
+    <script src='js/zepto.min.js'></script>
+    <script src='js/util.js'></script>
+    <script>
+    (function(){
+        
+        //预览模块
+        var url=location.search;
+        if(url.indexOf("?")!=-1){
+            var str=url.substr(1),
+                keyname=str.substr(str.indexOf('=')+1);
+
+        }
+        var html='',
+            preview=util.$('preview');
+       
+                var obj = util.readData(keyname),
+                    key2 = keyname.replace(/\d*/g,''),
+                    colorClass = key2 == 'income'? "earn" : "cost" ,
+                    symbol =  key2 == 'income'? '+':'-';
+
+                html='<div class="preview_img"><img src="images/'+key2+'.png" id="preview_img"/></div>'+'<div class="middle-lv"><div class="preview_num '+colorClass+'" id="preview_num">金额'+symbol+obj.money+'</div>'+'<div class="preview_msg" id="preview_msg">事项'+obj.msg+'</div></div>'+'<div class="preview_delete" id="preview_delete"><a href="#"><img src="images/delete3.png"/></a></div>';
+            
+        preview.innerHTML=html;
+        
+            var category=key2;
+            var msg = util.$('msg');
+            var money = util.$('money');
+            var save = util.$('save');
+            var target_in;
+            var preview_num = util.$('preview_num');
+            var preview_msg = util.$('preview_msg');
+            var target_touch = '';
+        
+        //自动填充
+        
+        money.value=obj.money;
+        msg.value=obj.msg;
+        
+        
+          
+        //选择账目事件
+        $('#choose').tap(function(event){
+            //util.addEvent(choose,'touchstart',function(event){
+                var e = util.getEvent(event);
+                target_touch = util.getTarget(e);
+                if(target_touch.parentNode.parentNode==choose){
+                      dellv();
+                    if(!category){
+                        category = target_touch.dataset.id;
+                        target_touch.className='choose_img';
+                        target_in = target_touch;
+                    }else{
+                        target_in.className='';
+                        category=target_touch.dataset.id;
+                        target_touch.className='choose_img';
+                        target_in = target_touch;
+                    }
+                    util.$('preview_img').src='images/'+category+'.png';
+                    if(money.value){
+                        var colorClass2= category=='income'?'earn' : 'cost',
+                            symbol2 =  category == 'income'? '+':'-';
+                        preview_num.className = "preview_num "+colorClass2;
+                        preview_num.innerHTML='金额'+symbol2+money.value;
+                    }
+                }
+            });
+        
+        //实时预览
+            if('\v'=='v'){
+                money.onpropertychange = previewNum;
+                msg.onpropertychange = previewMsg;
+            }else{
+                util.addEvent(money,'input',previewNum);
+                util.addEvent(msg,'input',previewMsg);
+            }
+            function previewNum(){
+                if(money){
+                    preview_num.innerHTML='';
+                    var colorClass2= category=='income'?'earn' : 'cost',
+                        symbol2 =  category == 'income'? '+':'-';
+                    preview_num.className = "preview_num "+colorClass2;
+                    preview_num.innerHTML='金额'+symbol2+money.value;
+                }
+                
+                
+                
+            }
+            function previewMsg(){
+                if(msg){
+                    preview_msg.innerHTML='事项'+msg.value;
+                }
+            }
+        
+        //删除
+        function dellv(event){
+             event=util.getEvent(event);
+                util.preventEvent(event);
+                preview_num.innerHTML='金额';
+                 preview_num.className = "preview_num black-lv"
+                preview_msg.innerHTML='事项';
+                msg.value='';
+                money.value='';
+        }
+        var preview_delete=util.$('preview_delete');
+        $('#preview_delete').tap(dellv);
+                    
+        
+        //保存
+        $('#save').tap(function(event){
+            //util.addEvent(save,'touchstart',function(event){
+           var a=0;
+            function checkmoney(){
+                var regnumber= /^\d+(\.\d+)?$/; 
+                if(!regnumber.test(money.value)&&money.value!=''){
+                     a=1;
+                     alert("金额必须为数字");
+                     money.value="";
+                }
+                if(regnumber.test(msg.value)&&msg.value!=''){
+                     a=2;
+                     alert("事项不能为数字");
+                     msg.value='';
+                }
+
+              }
+            checkmoney();
+            if(a==0){
+               if(category && msg.value && money.value){
+                    var now = new Date();
+                    var month = now.getMonth()+1;
+                    var dataObj = {money:money.value,msg:msg.value,mont:month};
+                    util.saveData(keyname, dataObj);
+                    window.location.href = 'index.html';
+                    
+               }else if(!category){
+                   alert('请选择账目类型');
+               }else if(!msg.value){
+                   alert('请输入事项');
+               }else if(!money.value){
+                   alert('请输入金额');
+               }
+           }
+            });
+    })();
+    </script>
+</body>
+</html>
